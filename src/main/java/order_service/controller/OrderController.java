@@ -27,6 +27,13 @@ public class OrderController {
 
         OrderDto order = orderService.getOrderById(id);
 
+        if (order == null) {
+            return Map.of(
+                    "message", "Order not found",
+                    "orderId", id
+            );
+        }
+
         UserDto user = userClient.getUser(order.getUserId());
 
         return Map.of(
