@@ -34,7 +34,7 @@ public class OrderController {
             );
         }
 
-        UserDto user = userClient.getUser(order.getUserId());
+        UserDto user = userClient.getUser(order.getUserId()).join();
 
         return Map.of(
                 "orderId", order.getOrderId(),

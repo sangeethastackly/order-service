@@ -1,12 +1,15 @@
 package order_service.service;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import order_service.dto.UserDto;
 
 @Service
@@ -18,58 +21,35 @@ public class UserClient {
         this.restClient = userRestClient;
     }
 
+    @Retry(name = "userService")
     @CircuitBreaker(
             name = "userService",
             fallbackMethod = "userServiceFallback"
     )
-    public UserDto getUser(Long userId) {
+    @TimeLimiter(name = "userService")
+    public CompletableFuture<UserDto> getUser(Long userId) {
 
-        int maxAttempts = 3;
+        System.out.println("Calling User Service...");
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-
-            try {
-
-                System.out.println("Attempt " + attempt);
-
-                return restClient.get()
+        return CompletableFuture.supplyAsync(() ->
+                restClient.get()
                         .uri("/api/users/{id}", userId)
                         .retrieve()
-                        .body(UserDto.class);
-
-            } catch (Exception e) {
-
-                System.out.println(
-                        "Attempt " + attempt + " failed"
-                );
-
-                if (attempt == maxAttempts) {
-
-                    throw new ResponseStatusException(
-                            HttpStatus.SERVICE_UNAVAILABLE,
-                            "User Service is unavailable after retries"
-                    );
-                }
-            }
-        }
-
-        throw new ResponseStatusException(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "User Service is unavailable"
+                        .body(UserDto.class)
         );
     }
 
-    public UserDto userServiceFallback(
+    public CompletableFuture<UserDto> userServiceFallback(
             Long userId,
             Throwable throwable) {
 
-        System.out.println(
-                "Circuit Breaker fallback triggered"
-        );
+        System.out.println("Fallback triggered because User Service is unavailable");
 
-        throw new ResponseStatusException(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "User Service is temporarily unavailable"
+        return CompletableFuture.failedFuture(
+                new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "User Service is temporarily unavailable"
+                )
         );
     }
 }
