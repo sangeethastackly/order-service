@@ -47,4 +47,8 @@ public class OrderController {
 		return "Hello from Sangeetha API - Child Branch Updated";
 	}
 
+    @GetMapping("/status")
+    public String status() {
+        return "Order Service API is running";
+    }
 }
