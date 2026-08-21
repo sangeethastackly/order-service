@@ -13,34 +13,38 @@ import order_service.service.UserClient;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrderService orderService;
-    private final UserClient userClient;
+	private final OrderService orderService;
 
-    public OrderController(OrderService orderService,
-                           UserClient userClient) {
-        this.orderService = orderService;
-        this.userClient = userClient;
-    }
+	private final UserClient userClient;
 
-    @GetMapping("/{id}")
-    public Map<String, Object> getOrder(@PathVariable Long id) {
+	public OrderController(OrderService orderService, UserClient userClient) {
 
-        OrderDto order = orderService.getOrderById(id);
+		this.orderService = orderService;
+		this.userClient = userClient;
 
-        if (order == null) {
-            return Map.of(
-                    "message", "Order not found",
-                    "orderId", id
-            );
-        }
+	}
 
-        UserDto user = userClient.getUser(order.getUserId()).join();
+	@GetMapping("/{id}")
+	public Map<String, Object> getOrder(@PathVariable Long id) {
 
-        return Map.of(
-                "orderId", order.getOrderId(),
-                "userId", user.getId(),
-                "userName", user.getName(),
-                "userEmail", user.getEmail()
-        );
-    }
+		OrderDto order = orderService.getOrderById(id);
+
+		if (order == null) {
+
+			return Map.of("message", "Order not found", "orderId", id);
+
+		}
+
+		UserDto user = userClient.getUser(order.getUserId()).join();
+
+		return Map.of("orderId", order.getOrderId(), "userId", user.getId(), "userName", user.getName(), "userEmail",
+				user.getEmail());
+
+	}
+
+	@GetMapping("/hello")
+	public String hello() {
+		return "Hello from Sangeetha API - Child Branch - Test API";
+	}
+
 }
